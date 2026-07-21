@@ -29,6 +29,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import java.util.Set;
@@ -48,7 +49,10 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
     Material.STICKY_PISTON,
     Material.DISPENSER,
     Material.DROPPER,
-    Material.HOPPER
+    Material.HOPPER,
+    Material.POWERED_RAIL,
+    Material.DETECTOR_RAIL,
+    Material.ACTIVATOR_RAIL
   );
 
   private DataStore store;
@@ -169,6 +173,12 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
     disableRedstoneInChunk(event.getChunk());
   }
 
+  @EventHandler
+  public void onBlockPlace(BlockPlaceEvent event) {
+    if (allRedstoneEnabled) return;
+    scanBlock(event.getBlock());
+  }
+
   /** Sweeps every currently loaded chunk in every world and kills active redstone. */
   public void disableAllRedstone() {
     for (World world : getServer().getWorlds()) {
@@ -194,33 +204,34 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
 
         for (int y = minY; y <= topY; y++) {
           Block block = chunk.getBlock(x, y, z);
-          Material type = block.getType();
-
-          if (!REDSTONE_TYPES.contains(type)) {
-            continue;
-          }
-
-          BlockData data = block.getBlockData();
-          boolean changed = false;
-
-          if (data instanceof Powerable powerable && powerable.isPowered()) {
-            powerable.setPowered(false);
-            changed = true;
-          }
-          if (data instanceof Lightable lightable && lightable.isLit()) {
-            lightable.setLit(false);
-            changed = true;
-          }
-          if (data instanceof Levelled levelled && levelled.getLevel() > 0) {
-            levelled.setLevel(0);
-            changed = true;
-          }
-
-          if (changed) {
-            block.setBlockData(data, false); // false = skip physics update
-          }
+          scanBlock(block);
         }
       }
+    }
+  }
+
+  public void scanBlock(Block block) {
+    Material type = block.getType();
+    if (!REDSTONE_TYPES.contains(type)) return;
+
+    BlockData data = block.getBlockData();
+    boolean changed = false;
+
+    if (data instanceof Powerable powerable && powerable.isPowered()) {
+      powerable.setPowered(false);
+      changed = true;
+    }
+    if (data instanceof Lightable lightable && lightable.isLit()) {
+      lightable.setLit(false);
+      changed = true;
+    }
+    if (data instanceof Levelled levelled && levelled.getLevel() > 0) {
+      levelled.setLevel(0);
+      changed = true;
+    }
+
+    if (changed) {
+      block.setBlockData(data, false); // false = skip physics update
     }
   }
 }
