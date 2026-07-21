@@ -138,6 +138,7 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
 
     if (store != null) {
       try {
+        chunkData.flush().join();
         store.close();
       } catch (Exception e) {
         getLogger().severe("Failed to close data store: " + e.getMessage());

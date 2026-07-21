@@ -89,7 +89,7 @@ jobs:
         uses: ./.github/actions/common-setup
 
       - name: Publish with Gradle
-        run: ./gradlew -Pver="0.0.0-RC-1" release
+        run: ./gradlew -Pver="0.0.1-RC-1" release
 
       - name: Upload build results
         uses: actions/upload-artifact@v7
