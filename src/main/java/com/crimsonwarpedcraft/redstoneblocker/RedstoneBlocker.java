@@ -72,7 +72,12 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
 
   public void setAllRedstoneEnabled(boolean value) {
     allRedstoneEnabled = value;
-    if (!value) disableAllRedstone();
+
+    if (!value) {
+      disableAllRedstone();
+    } else {
+      reevaluateAllRedstone();
+    }
   }
 
   @Override
@@ -170,13 +175,49 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
   @EventHandler
   public void onChunkLoad(ChunkLoadEvent event) {
     if (allRedstoneEnabled) return;
-    disableRedstoneInChunk(event.getChunk());
+    Chunk chunk = event.getChunk();
+    if (exemptChunks.contains(chunkKey(chunk))) return;
+    disableRedstoneInChunk(chunk);
   }
 
   @EventHandler
   public void onBlockPlace(BlockPlaceEvent event) {
     if (allRedstoneEnabled) return;
+    Block block = event.getBlock();
+    Chunk chunk = block.getChunk();
+    if (exemptChunks.contains(chunkKey(chunk))) return;
     scanBlock(event.getBlock());
+  }
+
+  public void reevaluateAllRedstone() {
+    for (World world : getServer().getWorlds()) {
+      for (Chunk chunk : world.getLoadedChunks()) {
+        reevaluateChunk(chunk);
+      }
+    }
+  }
+
+  private void reevaluateChunk(Chunk chunk) {
+    World world = chunk.getWorld();
+    int minY = world.getMinHeight();
+
+    for (int x = 0; x < 16; x++) {
+      for (int z = 0; z < 16; z++) {
+        int worldX = (chunk.getX() << 4) + x;
+        int worldZ = (chunk.getZ() << 4) + z;
+        int topY = world.getHighestBlockYAt(worldX, worldZ);
+
+        for (int y = minY; y <= topY; y++) {
+          Block block = chunk.getBlock(x, y, z);
+          if (!REDSTONE_TYPES.contains(block.getType())) continue;
+
+          BlockData data = block.getBlockData();
+          // Re-set the same data but WITH physics enabled this time,
+          // forcing the block (and its neighbors) to recompute power.
+          block.setBlockData(data, true);
+        }
+      }
+    }
   }
 
   /** Sweeps every currently loaded chunk in every world and kills active redstone. */

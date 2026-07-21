@@ -6,6 +6,7 @@ import com.crimsonwarpedcraft.redstoneblocker.config.PluginConfig;
 import com.crimsonwarpedcraft.redstoneblocker.data.PlayerData;
 import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
+import dev.jorel.commandapi.arguments.BooleanArgument;
 import org.bukkit.plugin.Plugin;
 import com.crimsonwarpedcraft.redstoneblocker.RedstoneBlocker;
 import org.bukkit.entity.Player;
@@ -64,11 +65,13 @@ public class ExampleCommand extends BaseCommand {
                 )
                 .withSubcommand(
                     new CommandAPICommand("allowall")
+                    .withArguments(new BooleanArgument("enabled"))
                     .executes((sender, args) -> {
-                        ((RedstoneBlocker) plugin).setAllRedstoneEnabled(
-                            !((RedstoneBlocker) plugin).isAllRedstoneEnabled());
-                        sender.sendMessage("Redstone is now " +
-                            (((RedstoneBlocker) plugin).isAllRedstoneEnabled() ? "enabled" : "disabled") + ".");
+                        boolean enabled = (boolean) args.get("enabled");
+                        RedstoneBlocker p = (RedstoneBlocker) plugin;
+
+                        p.setAllRedstoneEnabled(enabled);
+                        sender.sendMessage("Redstone is now " + (enabled ? "enabled" : "disabled") + ".");
                     })
                 )
         );
