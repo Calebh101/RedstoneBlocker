@@ -8,6 +8,9 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.EntitySelectorArgument;
 import org.bukkit.plugin.Plugin;
 import com.crimsonwarpedcraft.redstoneblocker.RedstoneBlocker;
+import org.bukkit.entity.Player;
+import org.bukkit.Chunk;
+import com.crimsonwarpedcraft.cwcommons.store.Repository;
 
 /**
  * Registers and handles the /example command.
@@ -33,6 +36,32 @@ public class ExampleCommand extends BaseCommand {
         super(
             new CommandAPICommand("rb")
                 .withPermission("redstoneblocker.set")
+                .withSubcommand(
+                    new CommandAPICommand("allow")
+                    .executes((sender, args) -> {
+                        if (!(sender instanceof Player player)) {
+                            sender.sendMessage("This command can only be run by a player.");
+                            return;
+                        }
+
+                        RedstoneBlocker p = (RedstoneBlocker) plugin;
+                        Repository<String, Boolean> repo = p.chunkData;
+                        Chunk chunk = player.getLocation().getChunk();
+                        String key = RedstoneBlocker.chunkKey(chunk);
+
+                        if (p.exemptChunks.contains(key)) {
+                            p.exemptChunks.remove(key);
+                            repo.delete(key).thenRun(() ->
+                                p.getServer().getScheduler().runTask(p, () ->
+                                    player.sendMessage("This chunk will now be restricted to world settings.")));
+                        } else {
+                            p.exemptChunks.add(key);
+                            repo.put(key, true).thenRun(() ->
+                                p.getServer().getScheduler().runTask(p, () ->
+                                    player.sendMessage("This chunk will now be able to always use redstone.")));
+                        }
+                    })
+                )
                 .withSubcommand(
                     new CommandAPICommand("allowall")
                     .executes((sender, args) -> {

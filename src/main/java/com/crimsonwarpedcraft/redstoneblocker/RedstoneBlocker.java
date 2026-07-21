@@ -31,6 +31,8 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RedstoneBlocker extends JavaPlugin implements Listener {
   private static final Set<Material> REDSTONE_TYPES = EnumSet.of(
@@ -53,7 +55,8 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
   private BukkitTask autoFlushTask;
   private boolean allRedstoneEnabled = true;
 
-  public static Repository<String, Boolean> chunkData = store.repository("chunk-data", Boolean.class, KeySerializers.forString());
+  public Repository<String, Boolean> chunkData;
+  public final Set<String> exemptChunks = ConcurrentHashMap.newKeySet();
 
   public static String chunkKey(Chunk chunk) {
     return chunk.getWorld().getName() + ":" + chunk.getX() + ":" + chunk.getZ();
@@ -102,8 +105,15 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
 
     autoFlushTask = AutoFlushTask.builder(store, this).build().start();
 
-    Repository<UUID, PlayerData> playerDataRepository =
-        store.repository("player-data", PlayerData.class, KeySerializers.forUuid());
+    Repository<UUID, PlayerData> playerDataRepository = store.repository("player-data", PlayerData.class, KeySerializers.forUuid());
+    chunkData = store.repository("chunk-data", Boolean.class, KeySerializers.forString());
+
+    chunkData.getAll().thenAccept(map -> {
+      exemptChunks.addAll(map.keySet());
+    }).exceptionally(e -> {
+      getLogger().severe("Failed to load exempt chunks: " + e.getMessage());
+      return null;
+    });
 
     getServer().getPluginManager().registerEvents(this, this);
 
@@ -148,6 +158,8 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
   @EventHandler
   public void onRedstoneChange(BlockRedstoneEvent event) {
     if (allRedstoneEnabled) return;
+    Chunk chunk = event.getBlock().getChunk();
+    if (exemptChunks.contains(chunkKey(chunk))) return;
     event.setNewCurrent(0);
   }
 
@@ -161,6 +173,7 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
   public void disableAllRedstone() {
     for (World world : getServer().getWorlds()) {
       for (Chunk chunk : world.getLoadedChunks()) {
+        if (exemptChunks.contains(chunkKey(chunk))) continue;
         disableRedstoneInChunk(chunk);
       }
     }
