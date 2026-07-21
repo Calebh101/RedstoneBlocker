@@ -5,11 +5,11 @@ Use this checklist when turning the template into a plugin.
 ## Plugin identity
 
 1. Set `rootProject.name` in `settings.gradle.kts` to the Java entry point class name.
-2. Rename `ExamplePlugin.java`, the `ExamplePlugin` class, and all references to it. The current
+2. Rename `RedstoneBlocker.java`, the `RedstoneBlocker` class, and all references to it. The current
    `plugin.yml` build substitution requires this name to match `rootProject.name`.
 3. Set `group` in `build.gradle.kts` to the Java package.
 4. Rename the main and test package directories, declarations, and imports from
-   `com.crimsonwarpedcraft.exampleplugin`.
+   `com.crimsonwarpedcraft.redstoneblocker`.
 
 ## Example code
 

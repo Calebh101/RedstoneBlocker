@@ -3,8 +3,8 @@
 ### Adding new top-level commands
 To add an entirely new command (e.g. `/fly`), follow the `ExampleCommand` pattern:
 
-1. Create a class extending `BaseCommand` (from [cw-commons](https://github.com/CrimsonWarpedcraft/cw-commons)); build the full `CommandAPICommand` tree in the constructor and pass it to `super(...)`
-2. Call `.register()` on an instance of it in `ExamplePlugin.onEnable()`, alongside the existing `new ExampleCommand(config, creeperKillsManager, this).register()`
+1. Create a class extending `BaseCommand` (from [cw-commons](https://github.com/crimsonwarpedcraft/cw-commons)); build the full `CommandAPICommand` tree in the constructor and pass it to `super(...)`
+2. Call `.register()` on an instance of it in `RedstoneBlocker.onEnable()`, alongside the existing `new ExampleCommand(config, creeperKillsManager, this).register()`
 3. Add its permissions to `plugin.yml`. Do not add the command itself. CommandAPI registers it programmatically
 4. Write unit tests for each executor class following the `PingTest`/`GreetTest` pattern
 
@@ -45,7 +45,7 @@ Comments are preserved because `saveDefaultConfig()` writes this file once on fi
 cw-commons' `BukkitDataStoreBuilder`/`Repository`/`PlayerDataManager` stores any JSON-shaped data per player, not just counters. To add a new field, follow the `PlayerData`/`CreeperKillListener` pattern:
 
 1. Add a field with a getter/setter to `PlayerData` (`data/PlayerData.java`)
-2. Reuse the existing `Repository<UUID, PlayerData>`/`PlayerDataManager<PlayerData>` pair built once from the `BukkitDataStoreBuilder` store in `ExamplePlugin.onEnable()` — one repository backs every field on `PlayerData`, so adding a field never requires a new repository
+2. Reuse the existing `Repository<UUID, PlayerData>`/`PlayerDataManager<PlayerData>` pair built once from the `BukkitDataStoreBuilder` store in `RedstoneBlocker.onEnable()` — one repository backs every field on `PlayerData`, so adding a field never requires a new repository
 3. Read and write it with `PlayerDataManager#get`/`#save`, e.g. from a `Listener` like `CreeperKillListener` or a command executor like `CreepersKilled`
 4. Write unit tests mocking `PlayerDataManager`, following `CreeperKillListenerTest`/`CreepersKilledTest`
 5. (Optional) Periodically flush data stores using `AutoFlushTask.builder(...).build().start()` to prevent session data loss from an unexpected shutdown.

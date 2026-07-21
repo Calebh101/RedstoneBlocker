@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.exampleplugin.config;
+package com.crimsonwarpedcraft.redstoneblocker.config;
 
 import com.crimsonwarpedcraft.cwcommons.config.Config;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -21,20 +21,11 @@ public class PluginConfig implements Config {
   @JsonProperty("greet-message")
   private String greetMessage = "Hello, {player}!";
 
-  @NotBlank
-  @JsonProperty("creepers-killed-message")
-  private String creepersKilledMessage = "You have killed {count} creeper(s)!";
-
   PluginConfig() {}
 
   PluginConfig(String pongMessage, String greetMessage) {
     this.pongMessage = pongMessage;
     this.greetMessage = greetMessage;
-  }
-
-  PluginConfig(String pongMessage, String greetMessage, String creepersKilledMessage) {
-    this(pongMessage, greetMessage);
-    this.creepersKilledMessage = creepersKilledMessage;
   }
 
   public String getPongMessage() {
@@ -43,9 +34,5 @@ public class PluginConfig implements Config {
 
   public String getGreetMessage() {
     return greetMessage;
-  }
-
-  public String getCreepersKilledMessage() {
-    return creepersKilledMessage;
   }
 }

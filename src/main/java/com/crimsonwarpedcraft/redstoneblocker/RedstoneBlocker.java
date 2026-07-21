@@ -1,4 +1,4 @@
-package com.crimsonwarpedcraft.exampleplugin;
+package com.crimsonwarpedcraft.redstoneblocker;
 
 import com.crimsonwarpedcraft.cwcommons.config.bukkit.BukkitConfigManagerBuilder;
 import com.crimsonwarpedcraft.cwcommons.store.DataStore;
@@ -7,10 +7,9 @@ import com.crimsonwarpedcraft.cwcommons.store.Repository;
 import com.crimsonwarpedcraft.cwcommons.store.bukkit.AutoFlushTask;
 import com.crimsonwarpedcraft.cwcommons.store.bukkit.BukkitDataStoreBuilder;
 import com.crimsonwarpedcraft.cwcommons.store.bukkit.PlayerDataManager;
-import com.crimsonwarpedcraft.exampleplugin.command.ExampleCommand;
-import com.crimsonwarpedcraft.exampleplugin.config.PluginConfig;
-import com.crimsonwarpedcraft.exampleplugin.data.PlayerData;
-import com.crimsonwarpedcraft.exampleplugin.listener.CreeperKillListener;
+import com.crimsonwarpedcraft.redstoneblocker.command.ExampleCommand;
+import com.crimsonwarpedcraft.redstoneblocker.config.PluginConfig;
+import com.crimsonwarpedcraft.redstoneblocker.data.PlayerData;
 import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
 import java.io.File;
@@ -18,16 +17,22 @@ import java.io.IOException;
 import java.util.UUID;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.block.BlockRedstoneEvent;
+import org.bukkit.event.Listener;
 
-/**
- * Created by Levi Muniz on 7/29/20.
- *
- * @author Copyright (c) Levi Muniz. All Rights Reserved.
- */
-public class ExamplePlugin extends JavaPlugin {
-
+public class RedstoneBlocker extends JavaPlugin implements Listener {
   private DataStore store;
   private BukkitTask autoFlushTask;
+  private boolean allRedstoneEnabled = true;
+
+  public boolean isAllRedstoneEnabled() {
+    return allRedstoneEnabled;
+  }
+
+  public void setAllRedstoneEnabled(boolean value) {
+    allRedstoneEnabled = value;
+  }
 
   @Override
   public void onLoad() {
@@ -65,15 +70,11 @@ public class ExamplePlugin extends JavaPlugin {
 
     Repository<UUID, PlayerData> playerDataRepository =
         store.repository("player-data", PlayerData.class, KeySerializers.forUuid());
-    PlayerDataManager<PlayerData> creeperKillsManager =
-        new PlayerDataManager<>(playerDataRepository, this).registerEvents();
 
-    // Register event listener for creeper kills
-    getServer().getPluginManager()
-        .registerEvents(new CreeperKillListener(creeperKillsManager), this);
+    getServer().getPluginManager().registerEvents(this, this);
 
     // Set up in-game /example command
-    new ExampleCommand(config, creeperKillsManager, this).register();
+    new ExampleCommand(config, this).register();
   }
 
   @Override
@@ -108,5 +109,11 @@ public class ExamplePlugin extends JavaPlugin {
     } catch (ClassNotFoundException e) {
       return false;
     }
+  }
+
+  @EventHandler
+  public void onRedstoneChange(BlockRedstoneEvent event) {
+    if (allRedstoneEnabled) return;
+    event.setNewCurrent(0);
   }
 }

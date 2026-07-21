@@ -2,7 +2,7 @@
 A template for building PaperMC/Spigot Minecraft server plugins!
 
 <!-- TODO: CHANGE ME -->
-[![](https://github.com/CrimsonWarpedcraft/plugin-template/actions/workflows/main.yml/badge.svg)](https://github.com/CrimsonWarpedcraft/plugin-template/actions/workflows/main.yml)
+[![](https://github.com/crimsonwarpedcraft/plugin-template/actions/workflows/main.yml/badge.svg)](https://github.com/crimsonwarpedcraft/plugin-template/actions/workflows/main.yml)
 
 <!-- TODO: CHANGE ME -->
 [![](https://dcbadge.limes.pink/api/server/5XMmeV6EtJ)](https://discord.gg/5XMmeV6EtJ)
@@ -31,11 +31,11 @@ A template for building PaperMC/Spigot Minecraft server plugins!
 ### Testing 🧪
 * [JUnit 5](https://junit.org/) unit tests
 * [Mockito](https://site.mockito.org/) for mocking dependencies in unit tests
-* Integration tests against real [cw-commons](https://github.com/CrimsonWarpedcraft/cw-commons)
+* Integration tests against real [cw-commons](https://github.com/crimsonwarpedcraft/cw-commons)
 
 ### Example Plugin Code 🔌
 * `/example` command via [CommandAPI](https://commandapi.jorel.dev) demonstrating subcommands, tab completion, and permissions
-* Example config loading and validation via [cw-commons](https://github.com/CrimsonWarpedcraft/cw-commons)' `BukkitConfigManagerBuilder`, backed by [Jackson](https://github.com/fasterxml/jackson) and [Hibernate Validator](https://hibernate.org/validator/)
+* Example config loading and validation via [cw-commons](https://github.com/crimsonwarpedcraft/cw-commons)' `BukkitConfigManagerBuilder`, backed by [Jackson](https://github.com/fasterxml/jackson) and [Hibernate Validator](https://hibernate.org/validator/)
 * Example persistent per-player data storage via cw-commons' `BukkitDataStoreBuilder`/`Repository`/`PlayerDataManager`, demonstrated by `/example creepersKilled`: `CreeperKillListener` writes to it on each creeper kill, `CreepersKilled` reads it back
 
 ### Config Files 📁
