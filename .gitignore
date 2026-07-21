@@ -28,8 +28,12 @@
 
 # Gradle
 /.gradle/
-/build/
 out/
+
+# Builds
+/build/*
+!/build/libs/
+!/build/libs/*
 
 ## Binary
 /bin/

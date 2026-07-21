@@ -14,17 +14,50 @@ import dev.jorel.commandapi.CommandAPI;
 import dev.jorel.commandapi.CommandAPIPaperConfig;
 import java.io.File;
 import java.io.IOException;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
+import org.bukkit.Chunk;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Lightable;
+import org.bukkit.block.data.Powerable;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockRedstoneEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.block.BlockRedstoneEvent;
-import org.bukkit.event.Listener;
 
 public class RedstoneBlocker extends JavaPlugin implements Listener {
+  private static final Set<Material> REDSTONE_TYPES = EnumSet.of(
+    Material.REDSTONE_WIRE,
+    Material.REDSTONE_TORCH,
+    Material.REDSTONE_WALL_TORCH,
+    Material.REPEATER,
+    Material.COMPARATOR,
+    Material.LEVER,
+    Material.OBSERVER,
+    Material.REDSTONE_LAMP,
+    Material.PISTON,
+    Material.STICKY_PISTON,
+    Material.DISPENSER,
+    Material.DROPPER,
+    Material.HOPPER
+  );
+
   private DataStore store;
   private BukkitTask autoFlushTask;
   private boolean allRedstoneEnabled = true;
+
+  public static Repository<String, Boolean> chunkData = store.repository("chunk-data", Boolean.class, KeySerializers.forString());
+
+  public static String chunkKey(Chunk chunk) {
+    return chunk.getWorld().getName() + ":" + chunk.getX() + ":" + chunk.getZ();
+  }
 
   public boolean isAllRedstoneEnabled() {
     return allRedstoneEnabled;
@@ -32,6 +65,7 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
 
   public void setAllRedstoneEnabled(boolean value) {
     allRedstoneEnabled = value;
+    if (!value) disableAllRedstone();
   }
 
   @Override
@@ -115,5 +149,65 @@ public class RedstoneBlocker extends JavaPlugin implements Listener {
   public void onRedstoneChange(BlockRedstoneEvent event) {
     if (allRedstoneEnabled) return;
     event.setNewCurrent(0);
+  }
+
+  @EventHandler
+  public void onChunkLoad(ChunkLoadEvent event) {
+    if (allRedstoneEnabled) return;
+    disableRedstoneInChunk(event.getChunk());
+  }
+
+  /** Sweeps every currently loaded chunk in every world and kills active redstone. */
+  public void disableAllRedstone() {
+    for (World world : getServer().getWorlds()) {
+      for (Chunk chunk : world.getLoadedChunks()) {
+        disableRedstoneInChunk(chunk);
+      }
+    }
+  }
+
+  /** Kills active redstone state in a single chunk. Skips air above the highest block per column. */
+  public void disableRedstoneInChunk(Chunk chunk) {
+    World world = chunk.getWorld();
+    int minY = world.getMinHeight();
+
+    for (int x = 0; x < 16; x++) {
+      for (int z = 0; z < 16; z++) {
+        int worldX = (chunk.getX() << 4) + x;
+        int worldZ = (chunk.getZ() << 4) + z;
+
+        // Nothing above the highest solid block is worth checking - it's air.
+        int topY = world.getHighestBlockYAt(worldX, worldZ);
+
+        for (int y = minY; y <= topY; y++) {
+          Block block = chunk.getBlock(x, y, z);
+          Material type = block.getType();
+
+          if (!REDSTONE_TYPES.contains(type)) {
+            continue;
+          }
+
+          BlockData data = block.getBlockData();
+          boolean changed = false;
+
+          if (data instanceof Powerable powerable && powerable.isPowered()) {
+            powerable.setPowered(false);
+            changed = true;
+          }
+          if (data instanceof Lightable lightable && lightable.isLit()) {
+            lightable.setLit(false);
+            changed = true;
+          }
+          if (data instanceof Levelled levelled && levelled.getLevel() > 0) {
+            levelled.setLevel(0);
+            changed = true;
+          }
+
+          if (changed) {
+            block.setBlockData(data, false); // false = skip physics update
+          }
+        }
+      }
+    }
   }
 }
